@@ -22,7 +22,7 @@ def load_data(uploaded_file):
         return load_data_default()
 
 @st.cache_data
-def load_data_default(filepath='rfm/data.csv'):
+def load_data_default(filepath='/Users/shivendra/Desktop/customer-segmentation-rfm/rfm/data.csv'):
     """Loads the e-commerce data from the default 'data.csv' file."""
     try:
         df = pd.read_csv(filepath, encoding='ISO-8859-1')
