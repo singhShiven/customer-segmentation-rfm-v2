@@ -1,81 +1,161 @@
-# 🧠 Customer Segmentation with RFM Analysis
+# 📊 Customer Segmentation using RFM (Recency, Frequency, Monetary) Analysis
 
-🚀 **Objective:** Segment e-commerce customers based on purchase behavior using RFM (Recency, Frequency, Monetary) analysis, and build an interactive dashboard using Streamlit.
+This project performs **RFM analysis** on e-commerce transaction data to segment customers into meaningful groups like `Champions`, `Loyal Customers`, `Churned Customers`, and more.
 
----
-
-## 📌 Problem Statement
-
-E-commerce businesses need to target the right customers — but without data, they waste marketing budget. This project segments customers into meaningful groups to improve retention, increase revenue, and optimize campaigns.
+**Live App**: [Click here to try it out 🚀](https://customer-segmentation-rfm-v2-hxn5ksd9a3i7wseicj6lfy.streamlit.app/)
 
 ---
 
-## 📊 Tools Used
+## 📁 Features
 
-- Python (Pandas, Numpy)
-- Scikit-learn (for clustering)
-- Matplotlib / Seaborn / Plotly
-- Streamlit
-- Jupyter Notebook
+- Upload your own CSV or use default sample data
+- RFM Score calculation:
+  - **Recency** – Days since last purchase
+  - **Frequency** – Total number of purchases
+  - **Monetary** – Total amount spent
+- RFM segmentation logic with label assignment (e.g., Champions, Churned)
+- Interactive visualizations using Plotly:
+  - Bar chart of customer count by segment
+  - Average RFM values per segment
+- Downloadable CSV with RFM scores
+- Segment filtering using multiselect
 
 ---
 
-## 📂 Project Structure
+## 🧪 Exploratory Data Analysis (in Notebook)
+
+In the accompanying Jupyter notebook:
+- Cleaned and preprocessed the dataset
+- Verified null values and dropped rows with missing `CustomerID`
+- Performed basic descriptive analysis on Quantity, UnitPrice, and InvoiceDate
+- Visualized top purchasing customers and time-based purchase trends
+- Implemented and validated the RFM calculation before deploying to Streamlit
+
+---
+
+## 📊 RFM Segmentation Logic
+
+- Customers are scored 1–5 based on quantiles for Recency (R), Frequency (F), and Monetary (M)
+- Scores are concatenated into a `RFM_Score` (e.g., `555`, `511`)
+- Segments are assigned based on rules, for example:
+  - `555` → Champions
+  - High R & F but low M → Loyal Customers
+  - Low R, F, M → Churned
+
+---
+
+## 🛠️ Tech Stack
+
+- Python (Pandas, NumPy)
+- Streamlit (for web app)
+- Plotly Express (interactive charts)
+- Jupyter Notebook (EDA and RFM logic testing)
+
+---
+
+## 📁 File Structure
 ```
-customer-segmentation-rfm-dashboard/
-├── Customer_RFM_Analysis.ipynb
-├── images/
-│ ├── dashboard_preview.png
-│ └── rfm_plot.png
-├── README.md
-
+customer-segmentation-rfm-v2/
+│
+├── Customer_RFM_Analysis.ipynb # Jupyter notebook for EDA and RFM logic
+├── requirements.txt # Dependencies
+├── README.md # Project readme
+├── rfm/ # Contains data (data.csv)
+│ └── data.csv
+├── images/ # Output plots
+│ ├── Average RFM Values per segment.png
+│ ├── Customer Distribution by Segment.png
+│ └── RFM Table Preview.png
 ```
----
+## 🧪 Exploratory Data Analysis (in Notebook)
 
-## ⚙️ How It Works
+Performed in `Customer_RFM_Analysis.ipynb`:
+- Cleaned and structured transactional data
+- Generated **RFM metrics** using customer purchase history
+- Created **visualizations** to analyze:
+  - Customer distribution by segment
+  - Average RFM scores
+  - Preview of RFM score table
 
-1. **Data Cleaning & Preprocessing**  
-   - Loaded raw transaction data (date, customer ID, amount).
-   - Removed nulls, duplicates, and filtered valid records.
-
-2. **RFM Feature Engineering**  
-   - **Recency**: Days since last purchase  
-   - **Frequency**: Total number of purchases  
-   - **Monetary**: Total amount spent
-
-3. **RFM Scoring & Segmentation**  
-   - Scaled each RFM value using quantile-based scoring.
-   - Assigned customer segments (e.g., Loyal, At Risk, Big Spenders).
-   - 
-5. **Dashboard with Streamlit**  
-   - Created an interactive web app to filter segments, view charts, and export insights.
+Images are saved under the `images/` folder and used in the Streamlit app.
 
 ---
 
-## 📈 Results
+## 📊 RFM Segmentation Logic
 
-- Identified top 3 customer segments based on RFM scoring.
-- Visualized customer behavior and trends in an interactive dashboard.
-- Enabled stakeholders to take targeted marketing actions using clear, data-driven insights.
+Each customer is scored on:
+- **Recency**: Days since last purchase
+- **Frequency**: Total number of purchases
+- **Monetary**: Total amount spent
 
-Sample Insights:
-- 🟢 Loyal Customers: High frequency and monetary value — ideal for upselling.
-- 🟡 At-Risk Customers: Long recency — target with win-back campaigns.
-- 🔴 Low Value Customers: Low on all metrics — minimize spend.
+The scores are combined to assign segments like:
+- 🏆 Champions
+- 💰 Loyal Customers
+- ⛔️ At Risk
+- 📉 Lost Customers
 
 ---
 
-## 🚀 Try It Yourself
+## 🚀 App Features (Streamlit)
 
-🔗 [Launch the App](https://customer-segmentation-rfm-v2-mgvq3ojoeeq3bq7j5iph9c.streamlit.app/)
+- Upload your own transaction dataset
+- View interactive RFM segments
+- Analyze key metrics and distributions
+- Visual display of customer segments using bar plots
 
+---
 
-> 🧑‍💻 Or run it locally:
+## 📦 Installation
 
 ```bash
-git clone https://github.com/singhShiven/customer-segmentation-rfm.git
-cd customer-segmentation-rfm
-streamlit run Customer_RFM_Analysis.ipynb
+pip install -r requirements.txt
+```
+Run the Streamlit app locally:
+```
+streamlit run app.py
+```
+📚 Requirements
+Python 3.7+
+
+pandas
+
+matplotlib
+
+seaborn
+
+streamlit
+
+📂 Data
+Your dataset should be stored as:
+```
+rfm/data.csv
+```
+Ensure it contains at least:
+
+Customer ID
+
+Invoice Date
+
+Amount
+
+
+🧠 Motivation
+
+RFM is a proven and intuitive method for customer segmentation, especially useful in marketing, e-commerce, and sales analytics.
+
+
+🛠 Future Scope (Not Yet Done)
+
+Integration of KMeans or clustering models (currently not included)
+Prediction of churn using ML
+Export segment data for targeted campaigns
+
+🧑‍💻 Author
+
+Shivendra Singh
+
+[GitHub Repository](https://github.com/singhShiven/customer-segmentation-rfm-v2)
+
 
 
 
