@@ -1,3 +1,19 @@
+
+<p align="center">
+  <a href="https://github.com/singhShiven/customer-segmentation-rfm-v2/stargazers">
+    <img src="https://img.shields.io/github/stars/singhShiven/customer-segmentation-rfm-v2?style=social" alt="GitHub stars">
+  </a>
+  <a href="https://customer-segmentation-rfm-v2-mgvq3ojoeeq3bq7j5iph9c.streamlit.app/" target="_blank">
+    <img src="https://img.shields.io/badge/Live%20App-Streamlit-green?logo=streamlit" alt="Streamlit App">
+  </a>
+  <a href="https://github.com/singhShiven/customer-segmentation-rfm-v2/commits/main">
+    <img src="https://img.shields.io/github/last-commit/singhShiven/customer-segmentation-rfm-v2" alt="Last Commit">
+  </a>
+  <a href="https://github.com/singhShiven/customer-segmentation-rfm-v2/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/singhShiven/customer-segmentation-rfm-v2" alt="License">
+  </a>
+</p>
+
 # 📊 Customer Segmentation using RFM (Recency, Frequency, Monetary) Analysis
 
 This project performs **RFM analysis** on e-commerce transaction data to segment customers into meaningful groups like `Champions`, `Loyal Customers`, `Churned Customers`, and more.
