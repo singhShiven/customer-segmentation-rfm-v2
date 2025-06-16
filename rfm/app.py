@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # Function to load data
-def load_data(filepath='data.csv'):
+def load_data(filepath='rfm/data.csv'):
     """Loads the e-commerce data from a CSV file."""
     try:
         df = pd.read_csv(filepath, encoding='ISO-8859-1')
