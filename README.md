@@ -10,7 +10,7 @@
     <img src="https://img.shields.io/github/last-commit/singhShiven/customer-segmentation-rfm-v2" alt="Last Commit">
   </a>
   <a href="https://github.com/singhShiven/customer-segmentation-rfm-v2/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/singhShiven/customer-segmentation-rfm-v2" alt="License">
+    <img src="https://img.shields.io/github/license/singhShiven/customer-segmentation-rfm-v2" alt="LICENSE">
   </a>
 </p>
 
