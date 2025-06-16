@@ -69,7 +69,7 @@ Sample Insights:
 
 > 👇 Click below to launch the live dashboard (hosted via Streamlit Cloud):
 
-🔗 [Launch the App](https://share.streamlit.io/singhShiven/customer-segmentation-rfm/main/Customer_RFM_Analysis.ipynb)
+🔗 [Launch the App]([https://share.streamlit.io/singhShiven/customer-segmentation-rfm/main/Customer_RFM_Analysis.ipynb](https://customer-segmentation-rfm-v2-mgvq3ojoeeq3bq7j5iph9c.streamlit.app/))
 
 > 🧑‍💻 Or run it locally:
 
