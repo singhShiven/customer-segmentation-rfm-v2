@@ -3,10 +3,7 @@ import streamlit as st
 import plotly.express as px
 
 st.set_page_config(page_title="RFM Analysis", layout="wide")
-
 st.title('RFM Analysis of E-commerce Data')
-
-# Rest of the code will be added in subsequent steps
 
 @st.cache_data
 def load_data(uploaded_file):
@@ -19,13 +16,13 @@ def load_data(uploaded_file):
         except Exception as e:
             st.error(f"Error loading uploaded file: {e}")
             st.info("Attempting to load default data.csv...")
-            return load_data_default('/Users/shivendra/Downloads/v2/data.csv') # Fallback to default
+            return load_data_default()
     else:
         st.info("Upload a CSV file or the default data.csv will be used.")
-        return load_data_default('/Users/shivendra/Downloads/v2/data.csv') # Load default if no file uploaded
+        return load_data_default()
 
 @st.cache_data
-def load_data_default(filepath='/Users/shivendra/Downloads/v2/data.csv'):
+def load_data_default(filepath='rfm/data.csv'):
     """Loads the e-commerce data from the default 'data.csv' file."""
     try:
         df = pd.read_csv(filepath, encoding='ISO-8859-1')
@@ -37,7 +34,6 @@ def load_data_default(filepath='/Users/shivendra/Downloads/v2/data.csv'):
     except Exception as e:
         st.error(f"An error occurred while loading the default data: {e}")
         return None
-
 
 uploaded_file = st.file_uploader("Upload your CSV data file", type=["csv"])
 data = load_data(uploaded_file)
@@ -51,37 +47,41 @@ def perform_rfm_analysis(df):
     if df is None:
         return None
 
-    # Drop rows with missing CustomerID
+    required_cols = ['CustomerID', 'InvoiceDate', 'InvoiceNo', 'Quantity', 'UnitPrice']
+    missing_cols = [col for col in required_cols if col not in df.columns]
+    if missing_cols:
+        st.error(f"The following required columns are missing: {', '.join(missing_cols)}")
+        return None
+
     df.dropna(subset=['CustomerID'], inplace=True)
 
-    # Convert InvoiceDate to datetime and extract date
+    df = df[df['Quantity'] > 0]
+    df = df[df['UnitPrice'] > 0]
+
     df['InvoiceDate'] = pd.to_datetime(df['InvoiceDate'])
     df['InvoiceDateOnly'] = df['InvoiceDate'].dt.date
 
-    # Calculate Recency
+    # Recency
     recency_df = df.groupby('CustomerID')['InvoiceDateOnly'].max().reset_index()
     recency_df['InvoiceDateOnly'] = pd.to_datetime(recency_df['InvoiceDateOnly'])
     reference_date = pd.to_datetime(df['InvoiceDateOnly'].max()) + pd.Timedelta(days=1)
     recency_df['Recency'] = (reference_date - recency_df['InvoiceDateOnly']).dt.days
 
-    # Calculate Frequency
+    # Frequency
     frequency_df = df.groupby('CustomerID')['InvoiceNo'].nunique().reset_index()
     frequency_df.rename(columns={'InvoiceNo': 'Frequency'}, inplace=True)
 
-    # Calculate Monetary
+    # Monetary
     df['Total Sales'] = df['Quantity'] * df['UnitPrice']
     monetary_df = df.groupby('CustomerID')['Total Sales'].sum().reset_index()
     monetary_df.rename(columns={'Total Sales': 'Monetary'}, inplace=True)
 
-    # Merge RFM DataFrames
+    # Merge
     rfm_df = recency_df.merge(frequency_df, on='CustomerID').merge(monetary_df, on='CustomerID')
 
-    # Assign RFM scores
     rfm_df['R_Score'] = pd.qcut(rfm_df['Recency'], 5, labels=[5, 4, 3, 2, 1])
     rfm_df['F_Score'] = pd.qcut(rfm_df['Frequency'].rank(method='first'), 5, labels=[1, 2, 3, 4, 5])
     rfm_df['M_Score'] = pd.qcut(rfm_df['Monetary'], 5, labels=[1, 2, 3, 4, 5])
-
-    # Create RFM Score and Segments
     rfm_df['RFM_Score'] = rfm_df['R_Score'].astype(str) + rfm_df['F_Score'].astype(str) + rfm_df['M_Score'].astype(str)
 
     def rfm_segment(row):
@@ -99,36 +99,25 @@ def perform_rfm_analysis(df):
             return 'Others'
 
     rfm_df['Segment'] = rfm_df.apply(rfm_segment, axis=1)
-
     return rfm_df
 
 if data is not None:
-    rfm_result_df = perform_rfm_analysis(data.copy()) # Use a copy to avoid modifying the original loaded data
+    rfm_result_df = perform_rfm_analysis(data.copy())
 
     if rfm_result_df is not None:
         st.subheader('RFM Table Preview')
         st.markdown("""
-        This table shows a preview of the RFM analysis results for each customer.
-        - **CustomerID**: Unique identifier for each customer.
-        - **InvoiceDateOnly**: The date of the customer's most recent purchase.
-        - **Recency**: The number of days since the customer's last purchase. Lower recency indicates a more recent purchase.
-        - **Frequency**: The total number of unique purchases made by the customer. Higher frequency indicates more repeat business.
-        - **Monetary**: The total amount of money spent by the customer. Higher monetary value indicates a higher-spending customer.
-        - **R_Score, F_Score, M_Score**: Scores (1-5) assigned to Recency, Frequency, and Monetary based on quantiles. Higher scores generally indicate better performance (except for Recency where lower days get a higher score).
-        - **RFM_Score**: A combined score string derived from the R, F, and M scores.
-        - **Segment**: The customer segment assigned based on the RFM score.
+        - **CustomerID**: Unique identifier
+        - **Recency**: Days since last purchase
+        - **Frequency**: Total transactions
+        - **Monetary**: Total amount spent
+        - **RFM Score**: Combination of R, F, M
+        - **Segment**: Categorized customer group
         """)
         st.dataframe(rfm_result_df.head())
 
 if data is not None and rfm_result_df is not None:
     st.subheader('Customer Distribution Across RFM Segments')
-    st.markdown("""
-    This bar chart illustrates the number of customers falling into each defined RFM segment.
-    Investors can use this visualization to quickly grasp the size of different customer groups,
-    such as 'Champions' (most valuable customers) or 'Churned Customers' (least recently active).
-    This helps in understanding the current customer base composition and identifying segments that might require specific attention (e.g., re-engagement campaigns for churned customers).
-    """)
-
     segment_counts = rfm_result_df['Segment'].value_counts().reset_index()
     segment_counts.columns = ['Segment', 'Number of Customers']
 
@@ -143,18 +132,9 @@ if data is not None and rfm_result_df is not None:
     st.plotly_chart(fig_segment_counts, use_container_width=True)
 
 if data is not None and rfm_result_df is not None:
-    segment_characteristics = rfm_result_df.groupby('Segment')[['Recency', 'Frequency', 'Monetary']].mean()
-
-    segment_characteristics_melted = segment_characteristics.reset_index().melt(id_vars='Segment', var_name='Metric', value_name='Average Value')
-
     st.subheader('Average RFM Values per Segment')
-    st.markdown("""
-    This bar chart displays the average Recency, Frequency, and Monetary values for each customer segment.
-    For investors, this visualization helps in understanding the typical behavior and value of customers within each segment.
-    For example, 'Champions' have low average recency (recent purchases), high average frequency (frequent purchases), and high average monetary values (high spending), confirming their high value.
-    'Churned Customers', on the other hand, show high average recency (not purchased recently), low average frequency, and low average monetary values, indicating their lower engagement and value.
-    This information is crucial for tailoring marketing campaigns and resource allocation to maximize ROI for each segment.
-    """)
+    segment_characteristics = rfm_result_df.groupby('Segment')[['Recency', 'Frequency', 'Monetary']].mean()
+    segment_characteristics_melted = segment_characteristics.reset_index().melt(id_vars='Segment', var_name='Metric', value_name='Average Value')
 
     fig_segment_values = px.bar(
         segment_characteristics_melted,
@@ -171,12 +151,11 @@ if data is not None and rfm_result_df is not None:
 if data is not None and rfm_result_df is not None:
     st.subheader('Summary Insights')
     st.markdown("""
-    Based on the RFM analysis:
-    - **Champions** are your most valuable customers, they buy recently, frequently, and spend the most.
-    - **Loyal Customers** are also highly engaged and valuable, though perhaps slightly less recent or lower spending than Champions.
-    - **New Customers** have made recent purchases but lack frequency and monetary value, representing an opportunity for nurturing.
-    - **Potential Loyalists** have spent a good amount and recently, indicating potential for increased frequency.
-    - **Churned Customers** have not purchased recently and have lower frequency and monetary values, requiring re-engagement strategies.
+    - **Champions**: Recent, frequent, high-spending
+    - **Loyal Customers**: Frequent buyers
+    - **New Customers**: Recent but not frequent
+    - **Potential Loyalists**: On path to loyalty
+    - **Churned Customers**: Inactive or disengaged
     """)
 
     st.subheader('Download RFM Results')
@@ -196,7 +175,6 @@ if data is not None and rfm_result_df is not None:
         all_segments,
         default=all_segments
     )
-
     if selected_segments:
         filtered_rfm_df = rfm_result_df[rfm_result_df['Segment'].isin(selected_segments)]
         st.write('Filtered RFM Data:')
@@ -207,13 +185,9 @@ if data is not None and rfm_result_df is not None:
 st.markdown("""
 ### How to Run This Application
 
-1.  **Save the code:** Copy the complete code from all the cells above into a single Python file. You can use a text editor like VS Code, Sublime Text, or even Notepad. Save the file with a `.py` extension, for example, `rfm_app.py`.
-2.  **Open your terminal:** Navigate to the directory where you saved the `rfm_app.py` file using your terminal or command prompt.
-3.  **Run the command:** Execute the following command:
+1. Save this code in a `.py` file (e.g., `rfm_app.py`)
+2. Open terminal and run:
 
-    ```bash
-    streamlit run rfm_app.py
-    ```
-
-This command will start a local web server and open the Streamlit application in your default web browser. You can interact with the application there.
+```bash
+streamlit run rfm_app.py
 """)
