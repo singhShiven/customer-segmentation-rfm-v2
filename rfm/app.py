@@ -1,22 +1,51 @@
 import pandas as pd
 import streamlit as st
-import matplotlib.pyplot as plt
-import seaborn as sns
+import plotly.express as px
 
-# Function to load data
-def load_data(filepath='data.csv'):
-    """Loads the e-commerce data from a CSV file."""
+st.set_page_config(page_title="RFM Analysis", layout="wide")
+
+st.title('RFM Analysis of E-commerce Data')
+
+# Rest of the code will be added in subsequent steps
+
+@st.cache_data
+def load_data(uploaded_file):
+    """Loads the e-commerce data from an uploaded file or defaults to 'data.csv'."""
+    if uploaded_file is not None:
+        try:
+            df = pd.read_csv(uploaded_file, encoding='ISO-8859-1')
+            st.success("Data loaded successfully from uploaded file!")
+            return df
+        except Exception as e:
+            st.error(f"Error loading uploaded file: {e}")
+            st.info("Attempting to load default data.csv...")
+            return load_data_default('/Users/shivendra/Downloads/v2/data.csv') # Fallback to default
+    else:
+        st.info("Upload a CSV file or the default data.csv will be used.")
+        return load_data_default('/Users/shivendra/Downloads/v2/data.csv') # Load default if no file uploaded
+
+@st.cache_data
+def load_data_default(filepath='/Users/shivendra/Downloads/v2/data.csv'):
+    """Loads the e-commerce data from the default 'data.csv' file."""
     try:
         df = pd.read_csv(filepath, encoding='ISO-8859-1')
+        st.success("Data loaded successfully from default data.csv!")
         return df
     except FileNotFoundError:
-        st.error(f"Error: File not found at {filepath}")
+        st.error(f"Error: Default file not found at {filepath}")
         return None
     except Exception as e:
-        st.error(f"An error occurred while loading the data: {e}")
+        st.error(f"An error occurred while loading the default data: {e}")
         return None
 
-# Function to perform RFM analysis
+
+uploaded_file = st.file_uploader("Upload your CSV data file", type=["csv"])
+data = load_data(uploaded_file)
+
+if data is not None:
+    st.write("Data Preview:")
+    st.dataframe(data.head())
+
 def perform_rfm_analysis(df):
     """Performs RFM analysis on the input DataFrame."""
     if df is None:
@@ -73,20 +102,6 @@ def perform_rfm_analysis(df):
 
     return rfm_df
 
-# Main part of the Streamlit app
-st.title('RFM Analysis of E-commerce Data')
-
-st.markdown("""
-This application performs an RFM (Recency, Frequency, Monetary) analysis on e-commerce sales data.
-RFM is a marketing technique used to quantitatively rank and group customers based on their transaction history.
-For investors, understanding customer segments through RFM can provide insights into customer value,
-loyalty, and potential for future revenue, helping to inform marketing strategies and resource allocation.
-""")
-
-# Load data
-data = load_data()
-
-# Perform RFM analysis
 if data is not None:
     rfm_result_df = perform_rfm_analysis(data.copy()) # Use a copy to avoid modifying the original loaded data
 
@@ -105,42 +120,100 @@ if data is not None:
         """)
         st.dataframe(rfm_result_df.head())
 
-        st.subheader('Customer Distribution Across RFM Segments')
-        st.markdown("""
-        This bar chart illustrates the number of customers falling into each defined RFM segment.
-        Investors can use this visualization to quickly grasp the size of different customer groups,
-        such as 'Champions' (most valuable customers) or 'Churned Customers' (least recently active).
-        This helps in understanding the current customer base composition and identifying segments that might require specific attention (e.g., re-engagement campaigns for churned customers).
-        """)
-        plt.figure(figsize=(10, 6))
-        sns.countplot(x='Segment', data=rfm_result_df, order=rfm_result_df['Segment'].value_counts().index)
-        plt.title('Number of Customers per RFM Segment')
-        plt.xlabel('RFM Segment')
-        plt.ylabel('Number of Customers')
-        plt.xticks(rotation=45, ha='right')
-        plt.tight_layout()
-        st.pyplot(plt)
+if data is not None and rfm_result_df is not None:
+    st.subheader('Customer Distribution Across RFM Segments')
+    st.markdown("""
+    This bar chart illustrates the number of customers falling into each defined RFM segment.
+    Investors can use this visualization to quickly grasp the size of different customer groups,
+    such as 'Champions' (most valuable customers) or 'Churned Customers' (least recently active).
+    This helps in understanding the current customer base composition and identifying segments that might require specific attention (e.g., re-engagement campaigns for churned customers).
+    """)
 
-        segment_characteristics = rfm_result_df.groupby('Segment')[['Recency', 'Frequency', 'Monetary']].mean()
+    segment_counts = rfm_result_df['Segment'].value_counts().reset_index()
+    segment_counts.columns = ['Segment', 'Number of Customers']
 
-        segment_characteristics_melted = segment_characteristics.reset_index().melt(id_vars='Segment', var_name='Metric', value_name='Average Value')
+    fig_segment_counts = px.bar(
+        segment_counts,
+        x='Segment',
+        y='Number of Customers',
+        title='Number of Customers per RFM Segment',
+        labels={'Segment': 'RFM Segment', 'Number of Customers': 'Number of Customers'},
+        color='Segment'
+    )
+    st.plotly_chart(fig_segment_counts, use_container_width=True)
 
-        st.subheader('Average RFM Values per Segment')
-        st.markdown("""
-        This bar chart displays the average Recency, Frequency, and Monetary values for each customer segment.
-        For investors, this visualization helps in understanding the typical behavior and value of customers within each segment.
-        For example, 'Champions' have low average recency (recent purchases), high average frequency (frequent purchases), and high average monetary values (high spending), confirming their high value.
-        'Churned Customers', on the other hand, show high average recency (not purchased recently), low average frequency, and low average monetary values, indicating their lower engagement and value.
-        This information is crucial for tailoring marketing campaigns and resource allocation to maximize ROI for each segment.
-        """)
-        plt.figure(figsize=(12, 7))
-        sns.barplot(x='Segment', y='Average Value', hue='Metric', data=segment_characteristics_melted, palette='viridis')
-        plt.title('Average RFM Values per Segment')
-        plt.xlabel('RFM Segment')
-        plt.ylabel('Average Value')
-        plt.xticks(rotation=45, ha='right')
-        plt.legend(title='RFM Metric')
-        plt.tight_layout()
-        st.pyplot(plt)
+if data is not None and rfm_result_df is not None:
+    segment_characteristics = rfm_result_df.groupby('Segment')[['Recency', 'Frequency', 'Monetary']].mean()
 
+    segment_characteristics_melted = segment_characteristics.reset_index().melt(id_vars='Segment', var_name='Metric', value_name='Average Value')
 
+    st.subheader('Average RFM Values per Segment')
+    st.markdown("""
+    This bar chart displays the average Recency, Frequency, and Monetary values for each customer segment.
+    For investors, this visualization helps in understanding the typical behavior and value of customers within each segment.
+    For example, 'Champions' have low average recency (recent purchases), high average frequency (frequent purchases), and high average monetary values (high spending), confirming their high value.
+    'Churned Customers', on the other hand, show high average recency (not purchased recently), low average frequency, and low average monetary values, indicating their lower engagement and value.
+    This information is crucial for tailoring marketing campaigns and resource allocation to maximize ROI for each segment.
+    """)
+
+    fig_segment_values = px.bar(
+        segment_characteristics_melted,
+        x='Segment',
+        y='Average Value',
+        color='Metric',
+        barmode='group',
+        title='Average RFM Values per Segment',
+        labels={'Segment': 'RFM Segment', 'Average Value': 'Average Value', 'Metric': 'RFM Metric'},
+        color_discrete_map={'Recency': 'lightblue', 'Frequency': 'salmon', 'Monetary': 'lightgreen'}
+    )
+    st.plotly_chart(fig_segment_values, use_container_width=True)
+
+if data is not None and rfm_result_df is not None:
+    st.subheader('Summary Insights')
+    st.markdown("""
+    Based on the RFM analysis:
+    - **Champions** are your most valuable customers, they buy recently, frequently, and spend the most.
+    - **Loyal Customers** are also highly engaged and valuable, though perhaps slightly less recent or lower spending than Champions.
+    - **New Customers** have made recent purchases but lack frequency and monetary value, representing an opportunity for nurturing.
+    - **Potential Loyalists** have spent a good amount and recently, indicating potential for increased frequency.
+    - **Churned Customers** have not purchased recently and have lower frequency and monetary values, requiring re-engagement strategies.
+    """)
+
+    st.subheader('Download RFM Results')
+    csv_data = rfm_result_df.to_csv(index=False).encode('utf-8')
+    st.download_button(
+        label="Download RFM Results as CSV",
+        data=csv_data,
+        file_name='rfm_results.csv',
+        mime='text/csv',
+    )
+
+if data is not None and rfm_result_df is not None:
+    st.subheader('Filter by Segment')
+    all_segments = rfm_result_df['Segment'].unique().tolist()
+    selected_segments = st.multiselect(
+        'Select one or more segments to display:',
+        all_segments,
+        default=all_segments
+    )
+
+    if selected_segments:
+        filtered_rfm_df = rfm_result_df[rfm_result_df['Segment'].isin(selected_segments)]
+        st.write('Filtered RFM Data:')
+        st.dataframe(filtered_rfm_df)
+    else:
+        st.warning("Please select at least one segment to display filtered data.")
+
+st.markdown("""
+### How to Run This Application
+
+1.  **Save the code:** Copy the complete code from all the cells above into a single Python file. You can use a text editor like VS Code, Sublime Text, or even Notepad. Save the file with a `.py` extension, for example, `rfm_app.py`.
+2.  **Open your terminal:** Navigate to the directory where you saved the `rfm_app.py` file using your terminal or command prompt.
+3.  **Run the command:** Execute the following command:
+
+    ```bash
+    streamlit run rfm_app.py
+    ```
+
+This command will start a local web server and open the Streamlit application in your default web browser. You can interact with the application there.
+""")
